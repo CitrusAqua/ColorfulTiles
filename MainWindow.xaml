@@ -5,9 +5,9 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:ColorfulTiles"
         mc:Ignorable="d"
-        Title="MainWindow" Height="450" Width="800">
+        Title="MainWindow" Height="450" Width="800" ResizeMode="CanMinimize">
     <Grid>
-        <Button Content="Start" HorizontalAlignment="Left" Height="60" Margin="462,311,0,0" VerticalAlignment="Top" Width="150"/>
+        <Button Content="Start" HorizontalAlignment="Left" Height="60" Margin="600,330,0,0" VerticalAlignment="Top" Width="150" Click="Start_Clicked"/>
 
     </Grid>
 </Window>
