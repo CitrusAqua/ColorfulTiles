@@ -8,7 +8,13 @@
         Title="MainWindow" Height="450" Width="800" ResizeMode="CanMinimize">
     <Grid>
         <Button Content="Start" HorizontalAlignment="Left" Height="60" Margin="600,330,0,0" VerticalAlignment="Top" Width="150" Click="Start_Clicked"/>
-        <TextBlock HorizontalAlignment="Left" Height="401" Margin="10,10,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="585"/>
+        <RichTextBox x:Name="OutputBox" HorizontalAlignment="Left" Height="380" Margin="10,10,0,0" VerticalAlignment="Top" Width="585" IsReadOnly="True">
+            <FlowDocument>
+                <Paragraph>
+                    <Run Text=""/>
+                </Paragraph>
+            </FlowDocument>
+        </RichTextBox>
 
     </Grid>
 </Window>

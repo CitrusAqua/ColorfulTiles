@@ -30,12 +30,18 @@ namespace ColorfulTiles
         {
             if (!lnkLoaded)
             {
+                OutputBox.Focus();
+                //OutputBox.Select(OutputBox.TextLength, 0);
+                //OutputBox.ScrollToEnd();
+                OutputBox.AppendText("Start scanning all start menu items...\n");
                 ScanLnks(new DirectoryInfo(pathForAllUsers));
                 ScanLnks(new DirectoryInfo(pathForCurentUser));
                 TextListConverter.WriteFile(allLnks, "LnkPathes.txt");
                 TextListConverter.WriteFile(allLnkTargets, "LnkTargets.txt");
                 lnkLoaded = true;
             }
+
+            OutputBox.AppendText("Start generating colors...\n");
 
             foreach (string targetFile in allLnkTargets)
             {
@@ -65,7 +71,8 @@ namespace ColorfulTiles
                 double grayLevel = (0.299 * meanR + 0.587 * meanG + 0.114 * meanB) / 255.0;
                 string fgColor = grayLevel > 0.5 ? "dark" : "light";
 
-                WriteStyleXML(targetFile, fgColor, hex);
+                //WriteStyleXML(targetFile, fgColor, hex);
+                OutputBox.AppendText(targetFile + " has been written.\n");
             }
 
             //CopyAll(pathForAllUsers, tmpPathAllUsers);
