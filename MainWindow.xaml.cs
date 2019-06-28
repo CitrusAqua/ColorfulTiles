@@ -1,17 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
 using System.IO;
 using System.Drawing;
 using IWshRuntimeLibrary;
@@ -22,6 +11,11 @@ namespace ColorfulTiles
     public partial class MainWindow : Window
     {
         private WshShell shell = new WshShell();
+
+        private string pathForAllUsers = "C:\\ProgramData\\Microsoft\\Windows\\Start Menu\\Programs";
+        private string pathForCurentUser = System.Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\Microsoft\\Windows\\Start Menu\\Programs";
+        private string tmpPathAllUsers = ".\\tmp\\allUsers";
+        private string tmpPathCurUser = ".\\tmp\\curUser";
 
         private List<string> allLnks = new List<string>();
         private List<string> allLnkTargets = new List<string>();
@@ -36,8 +30,6 @@ namespace ColorfulTiles
         {
             if (!lnkLoaded)
             {
-                string pathForAllUsers = "C:\\ProgramData\\Microsoft\\Windows\\Start Menu\\Programs";
-                string pathForCurentUser = System.Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\Microsoft\\Windows\\Start Menu\\Programs";
                 ScanLnks(new DirectoryInfo(pathForAllUsers));
                 ScanLnks(new DirectoryInfo(pathForCurentUser));
                 TextListConverter.WriteFile(allLnks, "LnkPathes.txt");
@@ -47,15 +39,18 @@ namespace ColorfulTiles
 
             foreach (string targetFile in allLnkTargets)
             {
+                if (!System.IO.File.Exists(targetFile))
+                    continue;
+
                 Icon icon = System.Drawing.Icon.ExtractAssociatedIcon(targetFile);
                 Bitmap bitmap = icon.ToBitmap();
-                UInt64 h = (UInt64)bitmap.Height;
-                UInt64 w = (UInt64)bitmap.Width;
-                UInt64 pixelCount = h * w;
-                UInt64 meanR = 0, meanG = 0, meanB = 0;
-                for (UInt64 i = 0; i < h; i++)
+                int h = bitmap.Height;
+                int w = bitmap.Width;
+                int pixelCount = h * w;
+                int meanR = 0, meanG = 0, meanB = 0;
+                for (int i = 0; i < h; i++)
                 {
-                    for (UInt64 j = 0; j < w; j++)
+                    for (int j = 0; j < w; j++)
                     {
                         meanR += bitmap.GetPixel(i, j).R;
                         meanG += bitmap.GetPixel(i, j).G;
@@ -65,9 +60,19 @@ namespace ColorfulTiles
                 meanR /= pixelCount;
                 meanG /= pixelCount;
                 meanB /= pixelCount;
-                string hex = myColor.R.ToString("X2") + myColor.G.ToString("X2") + myColor.B.ToString("X2");
+                string hex = meanR.ToString("X2") + meanG.ToString("X2") + meanB.ToString("X2");
+
+                double grayLevel = (0.299 * meanR + 0.587 * meanG + 0.114 * meanB) / 255.0;
+                string fgColor = grayLevel > 0.5 ? "dark" : "light";
+
+                WriteStyleXML(targetFile, fgColor, hex);
             }
-            
+
+            //CopyAll(pathForAllUsers, tmpPathAllUsers);
+            //CopyAll(pathForCurentUser, tmpPathCurUser);
+
+            //RemoveAll(pathForAllUsers);
+            //RemoveAll(pathForCurentUser);
 
 
         }
@@ -100,18 +105,25 @@ namespace ColorfulTiles
 
         private void WriteStyleXML(string targetFile, string fgColor, string bgColor)
         {
-            string xmlFile = System.IO.Path.GetFileNameWithoutExtension(targetFile) + ".VisualElementsManifest.xml";
-            FileStream fs = new FileStream(xmlFile, FileMode.OpenOrCreate, FileAccess.Write);
+            string xmlPath = Path.GetDirectoryName(targetFile);
+            string xmlFile = Path.GetFileNameWithoutExtension(targetFile) + ".VisualElementsManifest.xml";
+            string xmlFull = Path.Combine(xmlPath, xmlFile);
+
+            Console.WriteLine(xmlFull);
+
+            if (System.IO.File.Exists(xmlFull))
+                return;
+
+            FileStream fs = new FileStream(xmlFull, FileMode.OpenOrCreate, FileAccess.Write);
             StreamWriter sw = new StreamWriter(fs);
             sw.Flush();
             sw.BaseStream.Seek(0, SeekOrigin.Begin);
 
-            sw.WriteLine("<Application xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance'>");
+            sw.WriteLine("<Application>");
             sw.WriteLine("  <VisualElements");
             sw.WriteLine("      ShowNameOnSquare150x150Logo='on'");
-            sw.WriteLine("      ShowNameOnSquare150x150Logo='on'");
             sw.WriteLine("      ForegroundText='" + fgColor + "'");
-            sw.WriteLine("      BackgroundColor='" + bgColor + "'/>");
+            sw.WriteLine("      BackgroundColor='#" + bgColor + "'/>");
             sw.WriteLine("</Application>");
 
             sw.Flush();
@@ -119,6 +131,23 @@ namespace ColorfulTiles
             fs.Close();
         }
 
+        private void CopyAll(string sourceDir, string targetDir)
+        {
+            Directory.CreateDirectory(targetDir);
+            foreach (string file in Directory.GetFiles(sourceDir))
+                System.IO.File.Copy(file, Path.Combine(targetDir, Path.GetFileName(file)));
+            foreach (string directory in Directory.GetDirectories(sourceDir))
+                CopyAll(directory, Path.Combine(targetDir, Path.GetFileName(directory)));
+        }
+
+        private void RemoveAll(string sourceDir)
+        {
+            System.IO.DirectoryInfo di = new DirectoryInfo(sourceDir);
+            foreach (FileInfo file in di.GetFiles())
+                file.Delete();
+            foreach (DirectoryInfo dir in di.GetDirectories())
+                dir.Delete(true);
+        }
 
     }
 }
