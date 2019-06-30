@@ -5,10 +5,10 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:ColorfulTiles"
         mc:Ignorable="d"
-        Title="MainWindow" Height="450" Width="800" ResizeMode="CanMinimize">
-    <Grid>
-        <Button x:Name="start_button" Content="Start" HorizontalAlignment="Left" Height="60" Margin="600,330,0,0" VerticalAlignment="Top" Width="150" Click="Start_Clicked"/>
-        <RichTextBox x:Name="OutputBox" HorizontalAlignment="Left" Height="380" Margin="10,10,0,0" VerticalAlignment="Top" Width="585" IsReadOnly="True" ScrollViewer.CanContentScroll="True" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
+        Title="MainWindow" Height="481" Width="863" ResizeMode="CanMinimize">
+    <Grid Margin="0,0,5,5">
+        <Button x:Name="start_button" Content="Start" HorizontalAlignment="Left" Height="26" Margin="759,353,0,0" VerticalAlignment="Top" Width="83" Click="Start_Clicked"/>
+        <RichTextBox x:Name="OutputBox" HorizontalAlignment="Left" Height="427" Margin="10,10,0,0" VerticalAlignment="Top" Width="744" IsReadOnly="True" ScrollViewer.CanContentScroll="True" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto" FontFamily="Consolas" Block.LineHeight="6" FontSize="14">
             <FlowDocument>
                 <Paragraph>
                     <Run Text=""/>

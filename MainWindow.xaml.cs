@@ -8,6 +8,8 @@ using IWshRuntimeLibrary;
 using System.Security;
 using System.Security.Permissions;
 using System.Threading;
+using System.Windows.Documents;
+using System.Windows.Media;
 
 namespace ColorfulTiles
 {
@@ -20,20 +22,88 @@ namespace ColorfulTiles
         private string pathForCurentUser = System.Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\Microsoft\\Windows\\Start Menu\\Programs";
         private string tmpPathAllUsers = ".\\tmp\\allUsers";
         private string tmpPathCurUser = ".\\tmp\\curUser";
+        private string genXMLList = ".\\genXMLList.txt";
 
         private List<string> allLnks = new List<string>();
         private List<string> allLnkTargets = new List<string>();
         private bool lnkLoaded = false;
 
+        private List<string> generatedXMLs = new List<string>();
 
-        private void out2box(string msg)
+
+        //=====
+        // Helper functions to print info onto richtextbox
+
+        private void out2box(string text)
         {
             OutputBox.Dispatcher.BeginInvoke(new Action(() =>
             {
-                OutputBox.AppendText(msg);
+                OutputBox.AppendText(text);
                 OutputBox.ScrollToEnd();
             }));
         }
+
+        private void out2box(string text, string color)
+        {
+            OutputBox.Dispatcher.BeginInvoke(new Action(() =>
+            {
+                BrushConverter bc = new BrushConverter();
+                TextRange tr = new TextRange(OutputBox.Document.ContentEnd, OutputBox.Document.ContentEnd);
+                tr.Text = text;
+                tr.ApplyPropertyValue(TextElement.ForegroundProperty, bc.ConvertFromString(color));
+                OutputBox.ScrollToEnd();
+            }));
+        }
+
+
+        //=====
+        // Helper functions to copy and remove files / folders 
+
+        private void CopyAll(string sourceDir, string targetDir)
+        {
+            Directory.CreateDirectory(targetDir);
+            foreach (string file in Directory.GetFiles(sourceDir))
+            {
+                string targetPath = Path.Combine(targetDir, Path.GetFileName(file));
+                if (System.IO.File.Exists(targetPath))
+                {
+                    out2box("Already exists: " + targetPath + "\n", "red");
+                    continue;
+                }
+                System.IO.File.Copy(file, targetPath);
+            }
+            foreach (string directory in Directory.GetDirectories(sourceDir))
+                CopyAll(directory, Path.Combine(targetDir, Path.GetFileName(directory)));
+        }
+
+        private void RemoveAll(string sourceDir)
+        {
+            System.IO.DirectoryInfo di = new DirectoryInfo(sourceDir);
+            foreach (FileInfo file in di.GetFiles())
+            {
+                try
+                {
+                    file.Delete();
+                }
+                catch (Exception e)
+                {
+                    out2box("Cannot delete: " + file.FullName + "\n", "red");
+                }
+            }
+            foreach (DirectoryInfo dir in di.GetDirectories())
+            {
+                try
+                {
+                    dir.Delete(true);
+                }
+                catch (Exception e)
+                {
+                    out2box("Cannot delete: " + dir.FullName + "\n", "red");
+                }
+            }
+        }
+
+
 
         public MainWindow()
         {
@@ -43,12 +113,17 @@ namespace ColorfulTiles
         private void Start_Clicked(object sender, RoutedEventArgs e)
         {
             start_button.IsEnabled = false;
-            Thread writeThread = new Thread(Run);
+            Thread writeThread = new Thread(GenAndMove);
             writeThread.Start();
         }
-        
 
-        private void Run()
+
+
+        //=====
+        // Generate configure files for all apps in start menu
+        // and move them to temp folders.
+
+        private void GenAndMove()
         {
             if (!lnkLoaded)
             {
@@ -94,19 +169,31 @@ namespace ColorfulTiles
                 
             }
 
-            //CopyAll(pathForAllUsers, tmpPathAllUsers);
-            //CopyAll(pathForCurentUser, tmpPathCurUser);
+            out2box("Moving shortcuts...\n");
 
-            //RemoveAll(pathForAllUsers);
-            //RemoveAll(pathForCurentUser);
+            CopyAll(pathForAllUsers, tmpPathAllUsers);
+            CopyAll(pathForCurentUser, tmpPathCurUser);
+
+            RemoveAll(pathForAllUsers);
+            RemoveAll(pathForCurentUser);
+
+            out2box("Writting XML list...\n");
+
+            TextListConverter.WriteFile(generatedXMLs, genXMLList);
+
+            out2box("Done\n");
         }
 
 
-        private void GenXMLs()
+        private void Restore()
         {
-
+            CopyAll(tmpPathAllUsers, pathForAllUsers);
+            CopyAll(tmpPathCurUser, pathForCurentUser);
         }
 
+
+        //=====
+        // Scan the start menu for app list.
 
         private void ScanLnks(FileSystemInfo info)
         {
@@ -133,6 +220,9 @@ namespace ColorfulTiles
         }
 
 
+        //=====
+        // Generate XML file for a specific app.
+
         private void WriteStyleXML(string targetFile, string fgColor, string bgColor)
         {
             string xmlPath = Path.GetDirectoryName(targetFile);
@@ -145,13 +235,13 @@ namespace ColorfulTiles
             permissionSet.AddPermission(writePermission);
             if (!permissionSet.IsSubsetOf(AppDomain.CurrentDomain.PermissionSet))
             {
-                out2box(xmlFull + " permission denied.\n");
+                out2box("Permission denied: " + xmlFull + "\n", "red");
                 return;
             }
 
             if (System.IO.File.Exists(xmlFull))
             {
-                out2box(xmlFull + " already exist.\n");
+                out2box("Already exists: " + xmlFull + "\n", "blue");
                 return;
             }
 
@@ -173,34 +263,21 @@ namespace ColorfulTiles
                 sw.Close();
                 fs.Close();
 
-                out2box(xmlFull + " created.\n");
+                out2box("Success: " + xmlFull + "\n", "green");
+
+                generatedXMLs.Add(xmlFull);
             }
             catch (UnauthorizedAccessException ex)
             {
-                out2box(xmlFull + " permission denied.\n");
+                out2box("Permission denied: " + xmlFull + "\n", "red");
             }
 
             
 
         }
 
-        private void CopyAll(string sourceDir, string targetDir)
-        {
-            Directory.CreateDirectory(targetDir);
-            foreach (string file in Directory.GetFiles(sourceDir))
-                System.IO.File.Copy(file, Path.Combine(targetDir, Path.GetFileName(file)));
-            foreach (string directory in Directory.GetDirectories(sourceDir))
-                CopyAll(directory, Path.Combine(targetDir, Path.GetFileName(directory)));
-        }
 
-        private void RemoveAll(string sourceDir)
-        {
-            System.IO.DirectoryInfo di = new DirectoryInfo(sourceDir);
-            foreach (FileInfo file in di.GetFiles())
-                file.Delete();
-            foreach (DirectoryInfo dir in di.GetDirectories())
-                dir.Delete(true);
-        }
+
 
     }
 }
