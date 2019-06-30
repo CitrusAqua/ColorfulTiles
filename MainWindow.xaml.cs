@@ -1,13 +1,17 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Windows;
+using System.Windows.Forms;
 using System.IO;
 using System.Drawing;
 using IWshRuntimeLibrary;
-
+using System.Security;
+using System.Security.Permissions;
+using System.Threading;
 
 namespace ColorfulTiles
 {
+
     public partial class MainWindow : Window
     {
         private WshShell shell = new WshShell();
@@ -21,6 +25,16 @@ namespace ColorfulTiles
         private List<string> allLnkTargets = new List<string>();
         private bool lnkLoaded = false;
 
+
+        private void out2box(string msg)
+        {
+            OutputBox.Dispatcher.BeginInvoke(new Action(() =>
+            {
+                OutputBox.AppendText(msg);
+                OutputBox.ScrollToEnd();
+            }));
+        }
+
         public MainWindow()
         {
             InitializeComponent();
@@ -28,12 +42,17 @@ namespace ColorfulTiles
 
         private void Start_Clicked(object sender, RoutedEventArgs e)
         {
+            start_button.IsEnabled = false;
+            Thread writeThread = new Thread(Run);
+            writeThread.Start();
+        }
+        
+
+        private void Run()
+        {
             if (!lnkLoaded)
             {
-                OutputBox.Focus();
-                //OutputBox.Select(OutputBox.TextLength, 0);
-                //OutputBox.ScrollToEnd();
-                OutputBox.AppendText("Start scanning all start menu items...\n");
+                out2box("Start scanning all start menu items...\n");
                 ScanLnks(new DirectoryInfo(pathForAllUsers));
                 ScanLnks(new DirectoryInfo(pathForCurentUser));
                 TextListConverter.WriteFile(allLnks, "LnkPathes.txt");
@@ -41,7 +60,7 @@ namespace ColorfulTiles
                 lnkLoaded = true;
             }
 
-            OutputBox.AppendText("Start generating colors...\n");
+            out2box("Start generating colors...\n");
 
             foreach (string targetFile in allLnkTargets)
             {
@@ -71,8 +90,8 @@ namespace ColorfulTiles
                 double grayLevel = (0.299 * meanR + 0.587 * meanG + 0.114 * meanB) / 255.0;
                 string fgColor = grayLevel > 0.5 ? "dark" : "light";
 
-                //WriteStyleXML(targetFile, fgColor, hex);
-                OutputBox.AppendText(targetFile + " has been written.\n");
+                WriteStyleXML(targetFile, fgColor, hex);
+                
             }
 
             //CopyAll(pathForAllUsers, tmpPathAllUsers);
@@ -80,7 +99,11 @@ namespace ColorfulTiles
 
             //RemoveAll(pathForAllUsers);
             //RemoveAll(pathForCurentUser);
+        }
 
+
+        private void GenXMLs()
+        {
 
         }
 
@@ -116,26 +139,49 @@ namespace ColorfulTiles
             string xmlFile = Path.GetFileNameWithoutExtension(targetFile) + ".VisualElementsManifest.xml";
             string xmlFull = Path.Combine(xmlPath, xmlFile);
 
-            Console.WriteLine(xmlFull);
+            PermissionSet permissionSet = new PermissionSet(PermissionState.None);
+            FileIOPermission writePermission = new FileIOPermission(FileIOPermissionAccess.AllAccess, xmlFull);
+            //FileIOPermissionAccess.AllAccess
+            permissionSet.AddPermission(writePermission);
+            if (!permissionSet.IsSubsetOf(AppDomain.CurrentDomain.PermissionSet))
+            {
+                out2box(xmlFull + " permission denied.\n");
+                return;
+            }
 
             if (System.IO.File.Exists(xmlFull))
+            {
+                out2box(xmlFull + " already exist.\n");
                 return;
+            }
 
-            FileStream fs = new FileStream(xmlFull, FileMode.OpenOrCreate, FileAccess.Write);
-            StreamWriter sw = new StreamWriter(fs);
-            sw.Flush();
-            sw.BaseStream.Seek(0, SeekOrigin.Begin);
+            try
+            {
+                FileStream fs = new FileStream(xmlFull, FileMode.OpenOrCreate, FileAccess.Write);
+                StreamWriter sw = new StreamWriter(fs);
+                sw.Flush();
+                sw.BaseStream.Seek(0, SeekOrigin.Begin);
 
-            sw.WriteLine("<Application>");
-            sw.WriteLine("  <VisualElements");
-            sw.WriteLine("      ShowNameOnSquare150x150Logo='on'");
-            sw.WriteLine("      ForegroundText='" + fgColor + "'");
-            sw.WriteLine("      BackgroundColor='#" + bgColor + "'/>");
-            sw.WriteLine("</Application>");
+                sw.WriteLine("<Application>");
+                sw.WriteLine("  <VisualElements");
+                sw.WriteLine("      ShowNameOnSquare150x150Logo='on'");
+                sw.WriteLine("      ForegroundText='" + fgColor + "'");
+                sw.WriteLine("      BackgroundColor='#" + bgColor + "'/>");
+                sw.WriteLine("</Application>");
 
-            sw.Flush();
-            sw.Close();
-            fs.Close();
+                sw.Flush();
+                sw.Close();
+                fs.Close();
+
+                out2box(xmlFull + " created.\n");
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                out2box(xmlFull + " permission denied.\n");
+            }
+
+            
+
         }
 
         private void CopyAll(string sourceDir, string targetDir)

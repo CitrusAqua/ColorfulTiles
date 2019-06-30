@@ -7,8 +7,8 @@
         mc:Ignorable="d"
         Title="MainWindow" Height="450" Width="800" ResizeMode="CanMinimize">
     <Grid>
-        <Button Content="Start" HorizontalAlignment="Left" Height="60" Margin="600,330,0,0" VerticalAlignment="Top" Width="150" Click="Start_Clicked"/>
-        <RichTextBox x:Name="OutputBox" HorizontalAlignment="Left" Height="380" Margin="10,10,0,0" VerticalAlignment="Top" Width="585" IsReadOnly="True">
+        <Button x:Name="start_button" Content="Start" HorizontalAlignment="Left" Height="60" Margin="600,330,0,0" VerticalAlignment="Top" Width="150" Click="Start_Clicked"/>
+        <RichTextBox x:Name="OutputBox" HorizontalAlignment="Left" Height="380" Margin="10,10,0,0" VerticalAlignment="Top" Width="585" IsReadOnly="True" ScrollViewer.CanContentScroll="True" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
             <FlowDocument>
                 <Paragraph>
                     <Run Text=""/>
