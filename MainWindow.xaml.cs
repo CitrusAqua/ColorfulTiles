@@ -1,15 +1,17 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Windows;
-using System.Windows.Forms;
 using System.IO;
 using System.Drawing;
-using IWshRuntimeLibrary;
 using System.Security;
 using System.Security.Permissions;
 using System.Threading;
 using System.Windows.Documents;
 using System.Windows.Media;
+
+using IWshRuntimeLibrary;
+
+
 
 namespace ColorfulTiles
 {
@@ -26,9 +28,11 @@ namespace ColorfulTiles
 
         private List<string> allLnks = new List<string>();
         private List<string> allLnkTargets = new List<string>();
-        private bool lnkLoaded = false;
-
         private List<string> generatedXMLs = new List<string>();
+
+        private delegate void taskDelegate();
+
+        private int operationDelay = 5;
 
 
         //=====
@@ -64,6 +68,7 @@ namespace ColorfulTiles
             Directory.CreateDirectory(targetDir);
             foreach (string file in Directory.GetFiles(sourceDir))
             {
+                Thread.Sleep(operationDelay);
                 string targetPath = Path.Combine(targetDir, Path.GetFileName(file));
                 if (System.IO.File.Exists(targetPath))
                 {
@@ -81,6 +86,7 @@ namespace ColorfulTiles
             System.IO.DirectoryInfo di = new DirectoryInfo(sourceDir);
             foreach (FileInfo file in di.GetFiles())
             {
+                Thread.Sleep(operationDelay);
                 try
                 {
                     file.Delete();
@@ -108,37 +114,78 @@ namespace ColorfulTiles
         public MainWindow()
         {
             InitializeComponent();
+            if (System.IO.File.Exists(genXMLList))
+                generatedXMLs = TextListConverter.ReadFile(genXMLList);
         }
 
-        private void Start_Clicked(object sender, RoutedEventArgs e)
+
+        private void DisableAllButtons()
         {
-            start_button.IsEnabled = false;
-            Thread writeThread = new Thread(GenAndMove);
-            writeThread.Start();
+            gen_button.IsEnabled = false;
+            rem_button.IsEnabled = false;
+            move_button.IsEnabled = false;
+            restore_button.IsEnabled = false;
         }
 
+        private void FinishCallback(IAsyncResult asyncResult)
+        {
+            out2box("Done\n");
+            Dispatcher.Invoke(() =>
+            {
+                gen_button.IsEnabled = true;
+                rem_button.IsEnabled = true;
+                move_button.IsEnabled = true;
+                restore_button.IsEnabled = true;
+            });
+        }
+
+
+        
+        private void Gen_Clicked(object sender, RoutedEventArgs e)
+        {
+            DisableAllButtons();
+            taskDelegate t = GenXMLs;
+            IAsyncResult asyncResult = t.BeginInvoke(FinishCallback, t);
+        }
+        
+        private void Rem_Clicked(object sender, RoutedEventArgs e)
+        {
+            DisableAllButtons();
+            taskDelegate t = RemXMLs;
+            IAsyncResult asyncResult = t.BeginInvoke(FinishCallback, t);
+        }
+        
+        private void Move_Clicked(object sender, RoutedEventArgs e)
+        {
+            DisableAllButtons();
+            taskDelegate t = MoveShortcuts;
+            IAsyncResult asyncResult = t.BeginInvoke(FinishCallback, t);
+        }
+        
+        private void Restore_Clicked(object sender, RoutedEventArgs e)
+        {
+            DisableAllButtons();
+            taskDelegate t = RestoreShortcuts;
+            IAsyncResult asyncResult = t.BeginInvoke(FinishCallback, t);
+        }
 
 
         //=====
         // Generate configure files for all apps in start menu
-        // and move them to temp folders.
 
-        private void GenAndMove()
+        private void GenXMLs()
         {
-            if (!lnkLoaded)
-            {
-                out2box("Start scanning all start menu items...\n");
-                ScanLnks(new DirectoryInfo(pathForAllUsers));
-                ScanLnks(new DirectoryInfo(pathForCurentUser));
-                TextListConverter.WriteFile(allLnks, "LnkPathes.txt");
-                TextListConverter.WriteFile(allLnkTargets, "LnkTargets.txt");
-                lnkLoaded = true;
-            }
+            out2box("Start scanning all start menu items...\n");
+            allLnks.Clear();
+            allLnkTargets.Clear();
+            ScanLnks(new DirectoryInfo(pathForAllUsers));
+            ScanLnks(new DirectoryInfo(pathForCurentUser));
 
             out2box("Start generating colors...\n");
 
             foreach (string targetFile in allLnkTargets)
             {
+                Thread.Sleep(operationDelay);
                 if (!System.IO.File.Exists(targetFile))
                     continue;
 
@@ -169,6 +216,37 @@ namespace ColorfulTiles
                 
             }
 
+            out2box("Writting XML list...\n");
+
+            TextListConverter.AppendFile(generatedXMLs, genXMLList);
+        }
+
+
+        private void RemXMLs()
+        {
+            out2box("Removing created XML files\n");
+            List<string> removed = new List<string>();
+            foreach (string xmlfile in generatedXMLs)
+            {
+                Thread.Sleep(operationDelay);
+                try
+                {
+                    System.IO.File.Delete(xmlfile);
+                    removed.Add(xmlfile);
+                }
+                catch (Exception e)
+                {
+                    out2box("Cannot delete: " + xmlfile + "\n", "red");
+                }
+            }
+            foreach (string xmlfile in removed)
+                generatedXMLs.Remove(xmlfile);
+            TextListConverter.WriteFile(generatedXMLs, genXMLList);
+        }
+
+
+        private void MoveShortcuts()
+        {
             out2box("Moving shortcuts...\n");
 
             CopyAll(pathForAllUsers, tmpPathAllUsers);
@@ -176,19 +254,18 @@ namespace ColorfulTiles
 
             RemoveAll(pathForAllUsers);
             RemoveAll(pathForCurentUser);
-
-            out2box("Writting XML list...\n");
-
-            TextListConverter.WriteFile(generatedXMLs, genXMLList);
-
-            out2box("Done\n");
         }
 
 
-        private void Restore()
+        private void RestoreShortcuts()
         {
+            out2box("Restoring shortcuts...\n");
+
             CopyAll(tmpPathAllUsers, pathForAllUsers);
             CopyAll(tmpPathCurUser, pathForCurentUser);
+
+            RemoveAll(tmpPathAllUsers);
+            RemoveAll(tmpPathCurUser);
         }
 
 
@@ -275,9 +352,6 @@ namespace ColorfulTiles
             
 
         }
-
-
-
 
     }
 }

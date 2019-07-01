@@ -37,5 +37,17 @@ namespace ColorfulTiles
             sw.Close();
             fs.Close();
         }
+
+        public static void AppendFile(List<string> list, string txtFile)
+        {
+            FileStream fs = new FileStream(txtFile, FileMode.Append, FileAccess.Write);
+            StreamWriter sw = new StreamWriter(fs);
+            sw.Flush();
+            sw.BaseStream.Seek(0, SeekOrigin.Begin);
+            for (int i = 0; i < list.Count; i++) sw.WriteLine(list[i]);
+            sw.Flush();
+            sw.Close();
+            fs.Close();
+        }
     }
 }

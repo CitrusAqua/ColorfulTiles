@@ -5,16 +5,19 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:ColorfulTiles"
         mc:Ignorable="d"
-        Title="MainWindow" Height="481" Width="863" ResizeMode="CanMinimize">
+        Title="MainWindow" Height="481" Width="973" ResizeMode="CanMinimize">
     <Grid Margin="0,0,5,5">
-        <Button x:Name="start_button" Content="Start" HorizontalAlignment="Left" Height="26" Margin="759,353,0,0" VerticalAlignment="Top" Width="83" Click="Start_Clicked"/>
-        <RichTextBox x:Name="OutputBox" HorizontalAlignment="Left" Height="427" Margin="10,10,0,0" VerticalAlignment="Top" Width="744" IsReadOnly="True" ScrollViewer.CanContentScroll="True" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto" FontFamily="Consolas" Block.LineHeight="6" FontSize="14">
+        <Button x:Name="gen_button" Content="Generate XMLs" HorizontalAlignment="Left" Height="26" Margin="759,10,0,0" VerticalAlignment="Top" Width="160" Click="Gen_Clicked"/>
+        <RichTextBox x:Name="OutputBox" HorizontalAlignment="Left" Height="410" Margin="10,10,0,0" VerticalAlignment="Top" Width="744" IsReadOnly="True" ScrollViewer.CanContentScroll="True" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto" FontFamily="Consolas" Block.LineHeight="6" FontSize="14">
             <FlowDocument>
                 <Paragraph>
                     <Run Text=""/>
                 </Paragraph>
             </FlowDocument>
         </RichTextBox>
+        <Button x:Name="move_button" Content="Backup Shortcuts" HorizontalAlignment="Left" Height="26" Margin="759,96,0,0" VerticalAlignment="Top" Width="160" Click="Move_Clicked"/>
+        <Button x:Name="restore_button" Content="Restore Shortcuts" HorizontalAlignment="Left" Height="26" Margin="759,127,0,0" VerticalAlignment="Top" Width="160" Click="Restore_Clicked"/>
+        <Button x:Name="rem_button" Content="Remove XMLs" HorizontalAlignment="Left" Height="26" Margin="759,41,0,0" VerticalAlignment="Top" Width="160" Click="Rem_Clicked"/>
 
     </Grid>
 </Window>
