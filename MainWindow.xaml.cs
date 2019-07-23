@@ -24,15 +24,13 @@ namespace ColorfulTiles
         private string pathForCurentUser = System.Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\Microsoft\\Windows\\Start Menu\\Programs";
         private string tmpPathAllUsers = ".\\tmp\\allUsers";
         private string tmpPathCurUser = ".\\tmp\\curUser";
-        private string genXMLList = ".\\genXMLList.txt";
+        private string XMLList = ".\\XMLList.txt";
 
         private List<string> allLnks = new List<string>();
         private List<string> allLnkTargets = new List<string>();
         private List<string> generatedXMLs = new List<string>();
 
         private delegate void taskDelegate();
-
-        private int operationDelay = 5;
 
 
         //=====
@@ -68,7 +66,6 @@ namespace ColorfulTiles
             Directory.CreateDirectory(targetDir);
             foreach (string file in Directory.GetFiles(sourceDir))
             {
-                Thread.Sleep(operationDelay);
                 string targetPath = Path.Combine(targetDir, Path.GetFileName(file));
                 if (System.IO.File.Exists(targetPath))
                 {
@@ -86,7 +83,6 @@ namespace ColorfulTiles
             System.IO.DirectoryInfo di = new DirectoryInfo(sourceDir);
             foreach (FileInfo file in di.GetFiles())
             {
-                Thread.Sleep(operationDelay);
                 try
                 {
                     file.Delete();
@@ -114,8 +110,8 @@ namespace ColorfulTiles
         public MainWindow()
         {
             InitializeComponent();
-            if (System.IO.File.Exists(genXMLList))
-                generatedXMLs = TextListConverter.ReadFile(genXMLList);
+            if (System.IO.File.Exists(XMLList))
+                generatedXMLs = TextListConverter.ReadFile(XMLList);
         }
 
 
@@ -151,7 +147,7 @@ namespace ColorfulTiles
         private void Rem_Clicked(object sender, RoutedEventArgs e)
         {
             DisableAllButtons();
-            taskDelegate t = RemXMLs;
+            taskDelegate t = RemoveXMLs;
             IAsyncResult asyncResult = t.BeginInvoke(FinishCallback, t);
         }
         
@@ -185,7 +181,6 @@ namespace ColorfulTiles
 
             foreach (string targetFile in allLnkTargets)
             {
-                Thread.Sleep(operationDelay);
                 if (!System.IO.File.Exists(targetFile))
                     continue;
 
@@ -218,17 +213,16 @@ namespace ColorfulTiles
 
             out2box("Writting XML list...\n");
 
-            TextListConverter.AppendFile(generatedXMLs, genXMLList);
+            TextListConverter.AppendFile(generatedXMLs, XMLList);
         }
 
 
-        private void RemXMLs()
+        private void RemoveXMLs()
         {
             out2box("Removing created XML files\n");
             List<string> removed = new List<string>();
             foreach (string xmlfile in generatedXMLs)
             {
-                Thread.Sleep(operationDelay);
                 try
                 {
                     System.IO.File.Delete(xmlfile);
@@ -241,7 +235,7 @@ namespace ColorfulTiles
             }
             foreach (string xmlfile in removed)
                 generatedXMLs.Remove(xmlfile);
-            TextListConverter.WriteFile(generatedXMLs, genXMLList);
+            TextListConverter.WriteFile(generatedXMLs, XMLList);
         }
 
 
