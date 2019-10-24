@@ -8,21 +8,21 @@ Change the background color of pinned desktop apps in start menu.
 
 2. Either of the below:
 
-   2.1 To **add** background color
+   2.1 To colorize tiles
 
-   ​	click Generate XMLs.
+   ​	Click **Generate XMLs**.
 
-   2.2 To **restore** background color
+   2.2 To reset tile color
 
-   ​	click Remove XMLs.
+   ​	Click **Remove XMLs**.
 
-3. Click Backup Shortcuts.
+3. Click **Backup Shortcuts**.
 
 4. Manually open start menu and wait until all pinned desktop apps disappear.
 
-5. Close start menu, then click Restore Shortcuts.
+5. Close start menu, then click **Restore Shortcuts**.
 
-6. Again, open start menu and wait a moment.
+6. Again, open start menu and wait until all tiles are restored.
 
 7. Done.
 
