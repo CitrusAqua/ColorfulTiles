@@ -1,28 +1,28 @@
 # ColorfulTiles
 
-Change the background color of pinned desktop apps in start menu.
+Change the tile background color of pinned desktop apps in startmenu.
 
 ## Usage
 
 1. Run as admin.
 
-2. Either of the below:
+2. Either of below:
 
-   2.1 To colorize tiles
+   2.1 To colorize
 
    ​	Click **Generate XMLs**.
 
-   2.2 To reset tile color
+   2.2 To reset
 
    ​	Click **Remove XMLs**.
 
 3. Click **Backup Shortcuts**.
 
-4. Manually open start menu and wait until all pinned desktop apps disappear.
+4. Open startmenu, wait until all pinned desktop apps have disappeared.
 
-5. Close start menu, then click **Restore Shortcuts**.
+5. Click **Restore Shortcuts**.
 
-6. Again, open start menu and wait until all tiles are restored.
+6. Open startmenu, wait until everything has restored.
 
 7. Done.
 
